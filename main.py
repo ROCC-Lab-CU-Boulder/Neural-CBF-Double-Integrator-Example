@@ -53,39 +53,6 @@ losses = ["mae", "huber", "logcosh"]
 
 gather_data_on_hyperparams = False
 
-######### FIXME: overhead crane dynamics ##############
-def crane_stuff():
-    def M(q):
-        x, theta = q
-        return np.array([
-        [m_c + m_p, -m_p * L * np.cos(theta)],
-        [-m_p * L * np.cos(theta), m_p * L**2],
-    ])
-    def V_m(q, qdot):
-        x, theta = q
-        xdot, thetadot = qdot
-        return np.array([
-            [0, m_p * L * thetadot * np.sin(theta)],
-            [0, 0]
-        ])
-    def G(q):
-        x, theta = q
-        return np.array([
-            [0],
-            [m * g * L * np.sin(theta)],
-        ])
-    def F_crane(t, z):
-        q = z[0:2]
-        qdot = z[2:4]
-        x, theta = q
-        xdot, thetadot = qdot
-        return np.array([
-            x,
-            theta,
-            np.linalg.inv(M(q)) * (-V_m(q, qdot) * qdot - G(q) + B * u)
-        ])
-#######################################################
-
 def F(t, x, v): return f(x) + g(x) * u_π(x, v)
 if gather_data_on_hyperparams:
     for this_activation in activations:
