@@ -1,5 +1,4 @@
 import numpy as np
-import dataviz
 import torch
 from sys import argv
 
@@ -51,77 +50,42 @@ n = len(bounds[0])
 activations = ["gelu", "tanh", "elu"]
 losses = ["mae", "huber", "logcosh"]
 
-gather_data_on_hyperparams = False
-
 def F(t, x, v): return f(x) + g(x) * u_π(x, v)
-if gather_data_on_hyperparams:
-    for this_activation in activations:
-        for this_loss in losses:
-            system = System(
-                F,
-                bounds, tspan
-            )
-            model = Model(
-                input_dim=n, # input to model is x (n)
-                output_dim=2 * n,
-                hidden_dim=128,
-                activation=this_activation,
-                dropout_rate=0.2
-            )
-            trainer = ModelTrainer(
-                model,
-                loss_type=this_loss,
-                lr=1e-4,
-                batch_size=128,
-                epochs=500,
-                plots=True
-            )
-            x_train, y_train, x_test, y_test = system.make_train_test_data()
-            trainer.train(x_train, y_train)
-            trainer.test(x_test, y_test)
-    dataviz.compare_errors()
-    dataviz.compare_losses()
-    print("finished gathering hyperparameter perf data.")
-    exit(0)
+
+system = System(
+    F,
+    bounds,
+    tspan,
+    simulate_trajectories=simulate_trajectories,
+)
+model = Model(
+    input_dim=n, # input to model is x (n)
+    output_dim=2 * n,
+    hidden_dim=128,
+    activation=activations[0],
+    dropout_rate=0.2
+)
+trainer = ModelTrainer(
+    model,
+    loss_type=losses[1],
+    lr=1e-4,
+    batch_size=128,
+    epochs=500,
+    plots=False,
+)
+if weights_path is not None:
+    trainer.model.load_state_dict(torch.load(weights_path, weights_only=True))
+    print(f"Loaded weights from {weights_path}. Skipping training...")
 else:
-    def F(t, x, v): return f(x) + g(x) * u_π(x)
-    system = System(
-        F,
-        bounds,
-        tspan,
-        simulate_trajectories=simulate_trajectories,
-    )
-    model = Model(
-        input_dim=n, # input to model is x (n)
-        output_dim=2 * n,
-        hidden_dim=128,
-        activation=activations[0],
-        dropout_rate=0.2
-    )
-    trainer = ModelTrainer(
-        model,
-        loss_type=losses[1],
-        lr=1e-4,
-        batch_size=128,
-        epochs=500,
-        plots=False,
-    )
-    if weights_path is not None:
-        trainer.model.load_state_dict(torch.load(weights_path, weights_only=True))
-        print(f"Loaded weights from {weights_path}. Skipping training...")
-    else:
-        x_train, y_train, x_test, y_test = system.make_train_test_data()
-        trainer.train(x_train, y_train)
-        trainer.test(x_test, y_test)
+    x_train, y_train, x_test, y_test = system.make_train_test_data()
+    trainer.train(x_train, y_train)
+    trainer.test(x_test, y_test)
 
 # take a controller that has a higher ω and find an initial
-# condition such that that nominal controller will violate my constraints
-# start the condition inside the level set of h(0)
+# condition such that that nominal controller will violate the constraints
+# start the condition inside the zero-level set of h(x)
 omega = omega * 20
 K = np.array([omega**2, 2 * zeta * omega])
-
-# FIXME: choosing a starting reference and ending reference only works when
-# dist(r,v) less than around 0.5
 
 r = -1.0
 def u_n(x):

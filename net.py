@@ -12,8 +12,6 @@ from tqdm import tqdm
 from torchsummary import summary
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# FIXME: need to save the weights between runs. allow for key to select whether or not we save/load
-
 
 class Metrics:
     def __init__(self, mode="train", metadata_loss: str = "", metadata_activation: str = ""):

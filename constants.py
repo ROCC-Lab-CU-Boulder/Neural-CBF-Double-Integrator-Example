@@ -5,6 +5,9 @@ def _get_identifier() -> str:
     """Get the newest identifier for storing session information in the metrics directory."""
     # parse previous run directories
     base_dir = "./metrics"
+    if "metrics" not in os.listdir("./"):
+        os.mkdir("./metrics")
+        print("Created directory './metrics' as it was not found")
     existing_runs = [
         d for d in os.listdir(base_dir)
         if os.path.isdir(os.path.join(base_dir, d)) and d.startswith("run-") and d[4:].isdigit()
